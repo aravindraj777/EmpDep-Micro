@@ -1,5 +1,6 @@
 package net.microservice.employeeservice.service.impl;
 
+import jakarta.persistence.EntityNotFoundException;
 import lombok.AllArgsConstructor;
 import net.microservice.employeeservice.dto.APIResponseDto;
 import net.microservice.employeeservice.dto.DepartmentDto;
@@ -12,6 +13,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.reactive.function.client.WebClient;
+
+import java.util.Optional;
 
 @Service
 @AllArgsConstructor
@@ -49,7 +52,8 @@ public class EmployeeServiceImpl  implements EmployeeService {
     @Override
     public APIResponseDto getEmployeeById(Long id) {
 
-        Employee employee = employeeRepository.findById(id).get();
+        Optional<Employee> optionalEmployee = employeeRepository.findById(id);
+
 
 //        RestTemplate
 
@@ -67,19 +71,50 @@ public class EmployeeServiceImpl  implements EmployeeService {
 //                .bodyToMono(DepartmentDto.class)
 //                .block();
 
-       DepartmentDto departmentDto =  apiClient.getDepartment(employee.getDepartmentCode());
+//       DepartmentDto departmentDto =  apiClient.getDepartment(employee.getDepartmentCode());
+//
+//        EmployeeDto employeeDto = new EmployeeDto(
+//                employee.getId(),
+//                employee.getFirstName(),
+//                employee.getLastName(),
+//                employee.getEmail(),
+//                employee.getDepartmentCode()
+//        );
+//
+//        APIResponseDto apiResponse = new APIResponseDto();
+//        apiResponse.setEmployee(employeeDto);
+//        apiResponse.setDepartment(departmentDto);
+//        return apiResponse;
 
-        EmployeeDto employeeDto = new EmployeeDto(
-                employee.getId(),
-                employee.getFirstName(),
-                employee.getLastName(),
-                employee.getEmail(),
-                employee.getDepartmentCode()
-        );
 
-        APIResponseDto apiResponse = new APIResponseDto();
-        apiResponse.setEmployee(employeeDto);
-        apiResponse.setDepartment(departmentDto);
-        return apiResponse;
+        if (optionalEmployee.isPresent()) {
+            Employee employee = optionalEmployee.get();
+
+            // RestTemplate
+            // ... (your RestTemplate code)
+
+            // WebClient
+            // ... (your WebClient code)
+
+            DepartmentDto departmentDto = apiClient.getDepartment(employee.getDepartmentCode());
+
+            EmployeeDto employeeDto = new EmployeeDto(
+                    employee.getId(),
+                    employee.getFirstName(),
+                    employee.getLastName(),
+                    employee.getEmail(),
+                    employee.getDepartmentCode()
+            );
+
+            APIResponseDto apiResponse = new APIResponseDto();
+            apiResponse.setEmployee(employeeDto);
+            apiResponse.setDepartment(departmentDto);
+            return apiResponse;
+        } else {
+            // Handle the case where the employee with the given id is not found
+            // You might want to throw an exception, return an error response, or handle it as appropriate for your application
+            // For example:
+            throw new EntityNotFoundException("Employee not found with ID: " + id);
+        }
     }
 }
